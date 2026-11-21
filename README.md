@@ -64,6 +64,19 @@ Offset to full-frame coords → NMS (IoU 0.3)
 | Dataset | [pedestrian-light_2024 (Roboflow Universe, v4)](https://universe.roboflow.com/guk/pedestrian-light_2024/dataset/4) |
 | Training | Google Colab — [notebook](https://colab.research.google.com/drive/1k8rkL-8aflN1hu1m8k_q6cjrRBPRnXyQ?usp=sharing) |
 
+### Training workflow
+
+The model was built with the workflow described in the blog posts below:
+
+1. **Dataset (Roboflow)**: crosswalk photos labeled with bounding boxes on the signal lamp only (the countdown display is excluded). Preprocessing: Auto-Orient + Resize to 640×640. Augmentation: brightness ±12%, blur 1.5 px, noise 0.14%, up to 3× outputs. Train/valid/test split 6:2:2, exported in YOLOv8 format (YOLOv10 uses the same label format).
+2. **Training (Google Colab, T4 GPU)**: [THU-MIG/yolov10](https://github.com/THU-MIG/yolov10) starting from pretrained `yolov10n.pt`.
+
+   ```bash
+   yolo task=detect mode=train epochs=50 batch=16 plots=True \
+     model=weights/yolov10n.pt data=<dataset>/data.yaml
+   ```
+3. **Export**: `runs/detect/train/weights/best.pt` → ONNX, then copied to `app/src/main/res/raw/`.
+
 To use the larger `yolov10s` model, change `R.raw.yolov10n` to `R.raw.yolov10s` in `MainViewModel.readModel()`. It is more accurate but slower and larger.
 
 ### Train your own model
@@ -124,7 +137,15 @@ Or open the project in Android Studio and press **Run**. Grant camera permission
 - [Training YOLOv10 on a Roboflow dataset in Colab — velog (Korean)](https://velog.io/@m32k/Colab%EC%9C%BC%EB%A1%9C-YOLOv10-%EC%9D%84-%ED%99%9C%EC%9A%A9%ED%95%98%EC%97%AC-Roboflow-%EB%8D%B0%EC%9D%B4%ED%84%B0%EC%85%8B%EC%9C%BC%EB%A1%9C-%EA%B0%9D%EC%B2%B4-%ED%83%90%EC%A7%80-%EB%AA%A8%EB%8D%B8-%ED%95%99%EC%8A%B5)
 - [Colab training notebook](https://colab.research.google.com/drive/1k8rkL-8aflN1hu1m8k_q6cjrRBPRnXyQ?usp=sharing)
 - [Roboflow dataset: pedestrian-light_2024](https://universe.roboflow.com/guk/pedestrian-light_2024/dataset/4)
-- [YOLOv10: Real-Time End-to-End Object Detection](https://github.com/THU-MIG/yolov10)
+- [YOLOv10: Real-Time End-to-End Object Detection — repository](https://github.com/THU-MIG/yolov10) / [paper (arXiv)](https://arxiv.org/abs/2405.14458)
+- [Ultralytics export docs](https://docs.ultralytics.com/modes/export/)
+- [ONNX Runtime](https://onnxruntime.ai)
+
+## Acknowledgements
+
+- The Android app started from [Aloe-droid/YOLOv10_android](https://github.com/Aloe-droid/YOLOv10_android) ([write-up on velog, Korean](https://velog.io/@aloe/YOLOv10-%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C)). Safety Walk adds the custom traffic-light model, Korean voice guidance, tiled inference with NMS, and the accessibility-focused behavior on top of it.
+- [YOLOv10](https://github.com/THU-MIG/yolov10) by THU-MIG, built on [Ultralytics](https://github.com/ultralytics/ultralytics).
+- [Roboflow](https://roboflow.com) for dataset labeling and hosting.
 
 ## License
 

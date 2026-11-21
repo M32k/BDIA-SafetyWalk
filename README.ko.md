@@ -64,6 +64,19 @@ ONNX Runtime · YOLOv10n  ──►  타일별 박스 (conf > 0.75)
 | 데이터셋 | [pedestrian-light_2024 (Roboflow Universe, v4)](https://universe.roboflow.com/guk/pedestrian-light_2024/dataset/4) |
 | 학습 | Google Colab — [노트북](https://colab.research.google.com/drive/1k8rkL-8aflN1hu1m8k_q6cjrRBPRnXyQ?usp=sharing) |
 
+### 학습 과정
+
+모델은 아래 참고 자료의 블로그 글에 정리한 과정으로 만들었습니다.
+
+1. **데이터셋 (Roboflow)**: 횡단보도 사진에서 신호등 불빛 부분만 박스로 라벨링했습니다(잔여 시간 표시는 제외). 전처리는 Auto-Orient와 640×640 Resize, 증강은 밝기 ±12%, 흐림 1.5px, 노이즈 0.14%(최대 3배)로 설정했습니다. 훈련/검증/테스트는 6:2:2로 나누고 YOLOv8 형식으로 내보냈습니다(YOLOv10도 같은 라벨 형식을 씁니다).
+2. **학습 (Google Colab, T4 GPU)**: [THU-MIG/yolov10](https://github.com/THU-MIG/yolov10)으로 사전 학습된 `yolov10n.pt`에서 시작했습니다.
+
+   ```bash
+   yolo task=detect mode=train epochs=50 batch=16 plots=True \
+     model=weights/yolov10n.pt data=<dataset>/data.yaml
+   ```
+3. **내보내기**: `runs/detect/train/weights/best.pt`를 ONNX로 변환한 뒤 `app/src/main/res/raw/`에 넣었습니다.
+
 더 큰 `yolov10s` 모델을 쓰려면 `MainViewModel.readModel()`의 `R.raw.yolov10n`을 `R.raw.yolov10s`로 바꾸면 됩니다. 정확도는 더 높지만 느리고 용량이 큽니다.
 
 ### 직접 모델 학습하기
@@ -124,7 +137,15 @@ cd BDIA-SafetyWalk
 - [Colab으로 YOLOv10을 활용하여 Roboflow 데이터셋으로 객체 탐지 모델 학습 — velog](https://velog.io/@m32k/Colab%EC%9C%BC%EB%A1%9C-YOLOv10-%EC%9D%84-%ED%99%9C%EC%9A%A9%ED%95%98%EC%97%AC-Roboflow-%EB%8D%B0%EC%9D%B4%ED%84%B0%EC%85%8B%EC%9C%BC%EB%A1%9C-%EA%B0%9D%EC%B2%B4-%ED%83%90%EC%A7%80-%EB%AA%A8%EB%8D%B8-%ED%95%99%EC%8A%B5)
 - [Colab 학습 노트북](https://colab.research.google.com/drive/1k8rkL-8aflN1hu1m8k_q6cjrRBPRnXyQ?usp=sharing)
 - [Roboflow 데이터셋: pedestrian-light_2024](https://universe.roboflow.com/guk/pedestrian-light_2024/dataset/4)
-- [YOLOv10: Real-Time End-to-End Object Detection](https://github.com/THU-MIG/yolov10)
+- [YOLOv10: Real-Time End-to-End Object Detection — 저장소](https://github.com/THU-MIG/yolov10) / [논문 (arXiv)](https://arxiv.org/abs/2405.14458)
+- [Ultralytics 내보내기(Export) 문서](https://docs.ultralytics.com/modes/export/)
+- [ONNX Runtime](https://onnxruntime.ai)
+
+## 감사의 말
+
+- 안드로이드 앱은 [Aloe-droid/YOLOv10_android](https://github.com/Aloe-droid/YOLOv10_android)([velog 글](https://velog.io/@aloe/YOLOv10-%EC%95%88%EB%93%9C%EB%A1%9C%EC%9D%B4%EB%93%9C))를 바탕으로 시작했습니다. Safety Walk는 여기에 직접 학습한 신호등 모델, 한국어 음성 안내, NMS를 포함한 타일 추론, 시각장애인 사용을 고려한 동작을 더했습니다.
+- THU-MIG의 [YOLOv10](https://github.com/THU-MIG/yolov10)과 그 기반인 [Ultralytics](https://github.com/ultralytics/ultralytics)
+- 데이터셋 라벨링과 배포에 사용한 [Roboflow](https://roboflow.com)
 
 ## 라이선스
 
